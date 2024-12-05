@@ -192,6 +192,8 @@ x = LR_loan_data.drop(columns=['loan_status'])
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(x) #scaling X for logistic regression
+X_scaled= pd.DataFrame(X_scaled, columns=x.columns)
+
 y = LR_loan_data['loan_status']  
 # Split the data
 X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=19)
@@ -220,9 +222,8 @@ print(conf_matrix)
 print("\n\nhyper param tunning via GridSearchCV---------------------------------------------------------")
 from sklearn.model_selection import GridSearchCV
 param_grid = [
-    {'C': [0.1, 1, 10, 100], 'penalty': ['l1'], 'solver': ['liblinear']}, # For liblinear
-    {'C': [0.1, 1, 10, 100], 'penalty': ['l2'], 'solver': ['lbfgs']}, # For lbfgs
-    {'C': [0.1, 1, 10, 100], 'penalty': ['elasticnet'], 'solver': ['saga']} # For saga
+    {'C': [0.1, 1, 10, 100], 'penalty': ['l1'], 'solver': ['liblinear']},  # For liblinear
+    {'C': [0.1, 1, 10, 100], 'penalty': ['l2'], 'solver': ['lbfgs']},  # For lbfgs
 ]
 
 grid_search = GridSearchCV(
@@ -243,6 +244,18 @@ y_test_pred = best_model.predict(X_test)
 from sklearn.metrics import accuracy_score, classification_report
 print("Test Set Accuracy:", accuracy_score(y_test, y_test_pred))
 print("Classification Report:\n", classification_report(y_test, y_test_pred))
+
+# Select a random sample from the dataset
+random_sample = LR_loan_data.sample(1, random_state=19)
+actual_val = random_sample['loan_status']
+random_sample = random_sample.drop(columns=['loan_status'])
+print("\nPrediction with a random value---------------------\nRandom Sample:\n", random_sample)
+
+# Predict the outcome using the model
+prediction = best_model.predict(random_sample)
+
+print("Predicted Loan Status (0 = Rejected, 1 = Approved):", prediction[0])
+print(f"Actual value from dataset:{actual_val}")
 
 ##now that we hve finished our parameter tunning and evaluated our model we can look into Random Forest
 print("\n\nRandom Forest------------------------------------------")
