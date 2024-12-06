@@ -13,8 +13,8 @@ import kagglehub
 import pandas as pd
 import seaborn as sns
 import numpy as np
-import sklearn
 import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 ##Loading data!
 print("Loading data ----------------------------------")
 path = kagglehub.dataset_download("taweilo/loan-approval-classification-data")
@@ -205,7 +205,6 @@ logistic_model.fit(X_train, y_train)
 
 print("Model trained successfully!")
 
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 # Make predictions
 y_pred = logistic_model.predict(X_test)
 # Accuracy
@@ -241,21 +240,166 @@ best_model = grid_search.best_estimator_
 # Evaluate on the test set
 y_test_pred = best_model.predict(X_test)
 
-from sklearn.metrics import accuracy_score, classification_report
 print("Test Set Accuracy:", accuracy_score(y_test, y_test_pred))
 print("Classification Report:\n", classification_report(y_test, y_test_pred))
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_test_pred))
 
 # Select a random sample from the dataset
-random_sample = LR_loan_data.sample(1, random_state=19)
-actual_val = random_sample['loan_status']
-random_sample = random_sample.drop(columns=['loan_status'])
-print("\nPrediction with a random value---------------------\nRandom Sample:\n", random_sample)
+rejected_loans = LR_loan_data[LR_loan_data['loan_status'] == 0]
+approved_loans = LR_loan_data[LR_loan_data['loan_status'] == 1]
 
-# Predict the outcome using the model
-prediction = best_model.predict(random_sample)
+# Randomly sample 5 from each group
+sample_rejected = rejected_loans.sample(5, random_state=19)
+sample_approved = approved_loans.sample(5, random_state=19)
 
-print("Predicted Loan Status (0 = Rejected, 1 = Approved):", prediction[0])
-print(f"Actual value from dataset:{actual_val}")
+# Combine the samples
+sample_data = pd.concat([sample_rejected, sample_approved])
+
+# Extract the actual values (loan_status)
+actual_vals = sample_data['loan_status']
+
+# Drop the loan_status column for predictions
+sample_data = sample_data.drop(columns=['loan_status'])
+
+# Predict the outcomes using the trained model
+predictions = best_model.predict(sample_data)
+
+# Display the results
+print("\nPredictions vs Actual Values---------------------")
+for i in range(len(sample_data)):
+    print(f"Sample {i+1}:")
+    print(f"Input Features:\n{sample_data.iloc[i]}")
+    print(f"Predicted Loan Status (0 = Rejected, 1 = Approved): {predictions[i]}")
+    print(f"Actual Loan Status: {actual_vals.iloc[i]}")
+    print("-" * 50)
 
 ##now that we hve finished our parameter tunning and evaluated our model we can look into Random Forest
-print("\n\nRandom Forest------------------------------------------")
+print("\n\nRandom Forest-----------------------------------------------------------------")
+print("\nRandom Forest Data before numeric conversion-----")
+print(RF_loan_data.head())
+##For random Forest we will make sure all data is in numerical format
+for column in categorical_columns:
+    # Convert column to categorical type
+    RF_loan_data[column] = RF_loan_data[column].astype("category")
+    # Assign category codes to the column
+    RF_loan_data[column] = RF_loan_data[column].cat.codes
+    # Print unique codes for the column
+    unique_values = RF_loan_data[column].unique()
+    print(f"{column}: {unique_values}")
+print("\nRandom Forest Data after numeric conversion-----")
+'''
+Unique values for categorical columns:
+person_gender: [0 1] === ['female' 'male']
+person_education: [4 3 1 0 2] === ['Master' 'High School' 'Bachelor' 'Associate' 'Doctorate']
+                    0 = Associate
+                    1 = Bachelor
+                    2 = Doctorate
+                    3 = High School
+                    4 = Master
+person_home_ownership: [3 2 0 1] === ['RENT' 'OWN' 'MORTGAGE' 'OTHER']
+                    0 = MORTGAGE
+                    1 = OTHER
+                    2 = OWN
+                    3 = RENT
+loan_intent: [4 1 3 5 2 0] === ['PERSONAL' 'EDUCATION' 'MEDICAL' 'VENTURE' 'HOMEIMPROVEMENT' 'DEBTCONSOLIDATION']
+                    0 = DEBTCONSOLIDATION
+                    1 = EDUCATION
+                    2 = HOMEIMPROVEMENT
+                    3 = MEDICAL
+                    4 = PERSONAL
+                    5 = VENTURE
+previous_loan_defaults_on_file: [0 1] === ['No' 'Yes']
+                    0 = No
+                    1 = Yes
+'''
+print(RF_loan_data.head())
+
+##Train and test splitting
+X = RF_loan_data.drop(columns=['loan_status'])
+y = RF_loan_data['loan_status'] 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+from sklearn.ensemble import RandomForestClassifier
+rf_model = RandomForestClassifier(n_estimators=150, random_state=42)
+# Train the model
+rf_model.fit(X_train, y_train)
+print("Random Forest model trained successfully!")
+
+y_pred = rf_model.predict(X_test)
+# Evaluate performance
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy:.2f}")
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+
+feature_importances = rf_model.feature_importances_
+feature_names = X.columns
+
+plt.figure(figsize=(10, 6))
+plt.barh(feature_names, feature_importances)
+plt.xlabel("Feature Importance")
+plt.ylabel("Feature")
+plt.title("Random Forest Feature Importance")
+plt.show()
+
+from sklearn.model_selection import GridSearchCV
+# Hyperparameter grid
+param_grid = {
+    'n_estimators': [100, 200, 300],       # Number of trees in the forest
+    'max_depth': [10, 20, None],           # Maximum depth of trees
+    'min_samples_split': [2, 5, 10],       # Minimum samples required to split a node
+    'min_samples_leaf': [1, 2, 4],         # Minimum samples required at each leaf node
+    'bootstrap': [True, False]             # Whether to use bootstrapping
+}
+
+# Grid Search
+grid_search = GridSearchCV(estimator=rf_model, param_grid=param_grid, 
+                           cv=3, n_jobs=-1, scoring='accuracy')
+
+# Fit GridSearchCV
+grid_search.fit(X_train, y_train)
+
+# Best Parameters
+print(f"Best Parameters: {grid_search.best_params_}")
+print(f"Best Cross-Validation Accuracy: {grid_search.best_score_}")
+
+# Use the best model with sample
+best_rf_model = grid_search.best_estimator_
+print("Test tuned model on test data-------------------------------------------------")
+# # Evaluate on the test set
+y_test_pred = best_rf_model.predict(X_test)
+print(f"Test Set Accuracy:{accuracy_score(y_test, y_test_pred)}")
+print(f"Classification Report:\n {classification_report(y_test, y_test_pred)}")
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_test_pred))
+
+
+rejected_loans = RF_loan_data[LR_loan_data['loan_status'] == 0]
+approved_loans = RF_loan_data[LR_loan_data['loan_status'] == 1]
+
+# Randomly sample 5 from each group
+sample_rejected = rejected_loans.sample(5, random_state=7)
+sample_approved = approved_loans.sample(5, random_state=7)
+
+# Combine the samples
+sample_data = pd.concat([sample_rejected, sample_approved])
+
+
+actual_vals = sample_data['loan_status']
+sample_data = sample_data.drop(columns=['loan_status'])
+
+predictions = best_rf_model.predict(sample_data)
+
+# Display the results
+print("\nPredictions vs Actual Values---------------------")
+for i in range(len(sample_data)):
+    print(f"Sample {i+1}:")
+    print(f"Input Features:\n{sample_data.iloc[i]}")
+    print(f"Predicted Loan Status (0 = Rejected, 1 = Approved): {predictions[i]}")
+    print(f"Actual Loan Status: {actual_vals.iloc[i]}")
+    print("-" * 50)
