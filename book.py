@@ -207,6 +207,7 @@ print("Model trained successfully!")
 
 # Make predictions
 y_pred = logistic_model.predict(X_test)
+y_prob = logistic_model.predict_proba(X_test)[:, 1]  # Get probabilities for class 1
 # Accuracy
 accuracy = accuracy_score(y_test, y_pred)
 print("Accuracy:", accuracy)
@@ -217,6 +218,26 @@ print(classification_report(y_test, y_pred))
 conf_matrix = confusion_matrix(y_test, y_pred)
 print("Confusion Matrix:")
 print(conf_matrix)
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=['Rejected', 'Approved'], yticklabels=['Rejected', 'Approved'])
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+
+# ROC Curve
+from sklearn.metrics import roc_curve, roc_auc_score
+fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+roc_auc = roc_auc_score(y_test, y_prob)
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, color='blue', label=f'ROC Curve (AUC = {roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], color='red', linestyle='--')
+plt.title("ROC Curve")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.legend(loc="lower right")
+plt.show()
 
 print("\n\nhyper param tunning via GridSearchCV---------------------------------------------------------")
 from sklearn.model_selection import GridSearchCV
@@ -273,6 +294,201 @@ for i in range(len(sample_data)):
     print(f"Predicted Loan Status (0 = Rejected, 1 = Approved): {predictions[i]}")
     print(f"Actual Loan Status: {actual_vals.iloc[i]}")
     print("-" * 50)
+
+'''
+Predictions vs Actual Values---------------------
+Sample 1:
+Input Features:
+person_age                            28.00
+person_gender                          0.00
+person_education                       3.00
+person_income                     120915.00
+person_emp_exp                         7.00
+person_home_ownership                  3.00
+loan_amnt                          18000.00
+loan_intent                            3.00
+loan_int_rate                         13.91
+loan_percent_income                    0.15
+cb_person_cred_hist_length             9.00
+credit_score                         501.00
+previous_loan_defaults_on_file         1.00
+Name: 37968, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 0
+Actual Loan Status: 0
+--------------------------------------------------
+Sample 2:
+Input Features:
+person_age                           22.00
+person_gender                         1.00
+person_education                      0.00
+person_income                     73010.00
+person_emp_exp                        0.00
+person_home_ownership                 0.00
+loan_amnt                         18000.00
+loan_intent                           0.00
+loan_int_rate                        12.99
+loan_percent_income                   0.25
+cb_person_cred_hist_length            2.00
+credit_score                        521.00
+previous_loan_defaults_on_file        1.00
+Name: 8764, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 0
+Actual Loan Status: 0
+--------------------------------------------------
+Sample 3:
+Input Features:
+person_age                           36.00
+person_gender                         0.00
+person_education                      3.00
+person_income                     60601.00
+person_emp_exp                       15.00
+person_home_ownership                 3.00
+loan_amnt                          3125.00
+loan_intent                           2.00
+loan_int_rate                        13.47
+loan_percent_income                   0.05
+cb_person_cred_hist_length           14.00
+credit_score                        671.00
+previous_loan_defaults_on_file        1.00
+Name: 29672, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 1
+Actual Loan Status: 0
+--------------------------------------------------
+Sample 4:
+Input Features:
+person_age                            27.00
+person_gender                          1.00
+person_education                       0.00
+person_income                     115426.00
+person_emp_exp                         0.00
+person_home_ownership                  3.00
+loan_amnt                          12000.00
+loan_intent                            1.00
+loan_int_rate                         11.11
+loan_percent_income                    0.10
+cb_person_cred_hist_length             6.00
+credit_score                         612.00
+previous_loan_defaults_on_file         0.00
+Name: 25642, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 0
+Actual Loan Status: 0
+--------------------------------------------------
+Sample 5:
+Input Features:
+person_age                           23.00
+person_gender                         1.00
+person_education                      0.00
+person_income                     66193.00
+person_emp_exp                        5.00
+person_home_ownership                 3.00
+loan_amnt                         15550.00
+loan_intent                           5.00
+loan_int_rate                        11.71
+loan_percent_income                   0.23
+cb_person_cred_hist_length            4.00
+credit_score                        679.00
+previous_loan_defaults_on_file        0.00
+Name: 17504, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 0
+Actual Loan Status: 0
+--------------------------------------------------
+Sample 6:
+Input Features:
+person_age                           24.00
+person_gender                         1.00
+person_education                      1.00
+person_income                     72818.00
+person_emp_exp                        0.00
+person_home_ownership                 3.00
+loan_amnt                          7000.00
+loan_intent                           1.00
+loan_int_rate                         7.51
+loan_percent_income                   0.10
+cb_person_cred_hist_length            4.00
+credit_score                        662.00
+previous_loan_defaults_on_file        0.00
+Name: 7140, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 0
+Actual Loan Status: 1
+--------------------------------------------------
+Sample 7:
+Input Features:
+person_age                           25.00
+person_gender                         0.00
+person_education                      1.00
+person_income                     51103.00
+person_emp_exp                        4.00
+person_home_ownership                 3.00
+loan_amnt                         18000.00
+loan_intent                           5.00
+loan_int_rate                         6.17
+loan_percent_income                   0.35
+cb_person_cred_hist_length            2.00
+credit_score                        642.00
+previous_loan_defaults_on_file        0.00
+Name: 970, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 0
+Actual Loan Status: 1
+--------------------------------------------------
+Sample 8:
+Input Features:
+person_age                            24.00
+person_gender                          1.00
+person_education                       3.00
+person_income                     128248.00
+person_emp_exp                         2.00
+person_home_ownership                  3.00
+loan_amnt                          13000.00
+loan_intent                            2.00
+loan_int_rate                         12.69
+loan_percent_income                    0.10
+cb_person_cred_hist_length             4.00
+credit_score                         514.00
+previous_loan_defaults_on_file         0.00
+Name: 17357, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 0
+Actual Loan Status: 1
+--------------------------------------------------
+Sample 9:
+Input Features:
+person_age                           26.00
+person_gender                         0.00
+person_education                      1.00
+person_income                     65622.00
+person_emp_exp                        3.00
+person_home_ownership                 3.00
+loan_amnt                         25000.00
+loan_intent                           0.00
+loan_int_rate                        16.52
+loan_percent_income                   0.38
+cb_person_cred_hist_length            4.00
+credit_score                        555.00
+previous_loan_defaults_on_file        0.00
+Name: 43585, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 0
+Actual Loan Status: 1
+--------------------------------------------------
+Sample 10:
+Input Features:
+person_age                           22.00
+person_gender                         1.00
+person_education                      3.00
+person_income                     86016.00
+person_emp_exp                        0.00
+person_home_ownership                 3.00
+loan_amnt                          7000.00
+loan_intent                           3.00
+loan_int_rate                        15.88
+loan_percent_income                   0.08
+cb_person_cred_hist_length            3.00
+credit_score                        600.00
+previous_loan_defaults_on_file        0.00
+Name: 7225, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 0
+Actual Loan Status: 1
+--------------------------------------------------
+
+'''
 
 ##now that we hve finished our parameter tunning and evaluated our model we can look into Random Forest
 print("\n\nRandom Forest-----------------------------------------------------------------")
@@ -334,8 +550,14 @@ print("\nClassification Report:")
 print(classification_report(y_test, y_pred))
 
 print("\nConfusion Matrix:")
-print(confusion_matrix(y_test, y_pred))
-
+conf_matrix = confusion_matrix(y_test, y_pred)
+print(conf_matrix)
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=['Rejected', 'Approved'], yticklabels=['Rejected', 'Approved'])
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
 
 feature_importances = rf_model.feature_importances_
 feature_names = X.columns
@@ -371,7 +593,7 @@ print(f"Best Cross-Validation Accuracy: {grid_search.best_score_}")
 # Use the best model with sample
 best_rf_model = grid_search.best_estimator_
 print("Test tuned model on test data-------------------------------------------------")
-# # Evaluate on the test set
+#Evaluate on the test set
 y_test_pred = best_rf_model.predict(X_test)
 print(f"Test Set Accuracy:{accuracy_score(y_test, y_test_pred)}")
 print(f"Classification Report:\n {classification_report(y_test, y_test_pred)}")
@@ -403,3 +625,198 @@ for i in range(len(sample_data)):
     print(f"Predicted Loan Status (0 = Rejected, 1 = Approved): {predictions[i]}")
     print(f"Actual Loan Status: {actual_vals.iloc[i]}")
     print("-" * 50)
+
+'''
+Predictions vs Actual Values---------------------
+Sample 1:
+Input Features:
+person_age                           26.00
+person_gender                         1.00
+person_education                      1.00
+person_income                     98855.00
+person_emp_exp                        5.00
+person_home_ownership                 0.00
+loan_amnt                          6000.00
+loan_intent                           2.00
+loan_int_rate                         7.90
+loan_percent_income                   0.06
+cb_person_cred_hist_length            4.00
+credit_score                        702.00
+previous_loan_defaults_on_file        0.00
+Name: 12451, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 0
+Actual Loan Status: 0
+--------------------------------------------------
+Sample 2:
+Input Features:
+person_age                           40.00
+person_gender                         1.00
+person_education                      1.00
+person_income                     85896.00
+person_emp_exp                       15.00
+person_home_ownership                 0.00
+loan_amnt                          7000.00
+loan_intent                           1.00
+loan_int_rate                        15.38
+loan_percent_income                   0.08
+cb_person_cred_hist_length           12.00
+credit_score                        585.00
+previous_loan_defaults_on_file        1.00
+Name: 30959, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 0
+Actual Loan Status: 0
+--------------------------------------------------
+Sample 3:
+Input Features:
+person_age                            35.00
+person_gender                          0.00
+person_education                       3.00
+person_income                     144943.00
+person_emp_exp                        11.00
+person_home_ownership                  0.00
+loan_amnt                           8000.00
+loan_intent                            4.00
+loan_int_rate                         11.01
+loan_percent_income                    0.06
+cb_person_cred_hist_length            10.00
+credit_score                         591.00
+previous_loan_defaults_on_file         1.00
+Name: 26954, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 0
+Actual Loan Status: 0
+--------------------------------------------------
+Sample 4:
+Input Features:
+person_age                            24.00
+person_gender                          1.00
+person_education                       4.00
+person_income                     144985.00
+person_emp_exp                         4.00
+person_home_ownership                  0.00
+loan_amnt                           6000.00
+loan_intent                            1.00
+loan_int_rate                          9.94
+loan_percent_income                    0.04
+cb_person_cred_hist_length             3.00
+credit_score                         638.00
+previous_loan_defaults_on_file         1.00
+Name: 39742, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 0
+Actual Loan Status: 0
+--------------------------------------------------
+Sample 5:
+Input Features:
+person_age                           54.00
+person_gender                         0.00
+person_education                      0.00
+person_income                     35824.00
+person_emp_exp                       31.00
+person_home_ownership                 0.00
+loan_amnt                          2500.00
+loan_intent                           4.00
+loan_int_rate                        11.71
+loan_percent_income                   0.07
+cb_person_cred_hist_length           28.00
+credit_score                        626.00
+previous_loan_defaults_on_file        1.00
+Name: 32548, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 0
+Actual Loan Status: 0
+--------------------------------------------------
+Sample 6:
+Input Features:
+person_age                           22.00
+person_gender                         1.00
+person_education                      3.00
+person_income                     39160.00
+person_emp_exp                        0.00
+person_home_ownership                 3.00
+loan_amnt                          6800.00
+loan_intent                           5.00
+loan_int_rate                        14.11
+loan_percent_income                   0.17
+cb_person_cred_hist_length            2.00
+credit_score                        559.00
+previous_loan_defaults_on_file        0.00
+Name: 7475, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 1
+Actual Loan Status: 1
+--------------------------------------------------
+Sample 7:
+Input Features:
+person_age                           26.00
+person_gender                         1.00
+person_education                      3.00
+person_income                     57199.00
+person_emp_exp                        2.00
+person_home_ownership                 3.00
+loan_amnt                         15000.00
+loan_intent                           4.00
+loan_int_rate                         7.90
+loan_percent_income                   0.26
+cb_person_cred_hist_length            3.00
+credit_score                        586.00
+previous_loan_defaults_on_file        0.00
+Name: 17093, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 1
+Actual Loan Status: 1
+--------------------------------------------------
+Sample 8:
+Input Features:
+person_age                            22.00
+person_gender                          1.00
+person_education                       4.00
+person_income                     130852.00
+person_emp_exp                         0.00
+person_home_ownership                  3.00
+loan_amnt                          28000.00
+loan_intent                            1.00
+loan_int_rate                         11.01
+loan_percent_income                    0.21
+cb_person_cred_hist_length             4.00
+credit_score                         683.00
+previous_loan_defaults_on_file         0.00
+Name: 85, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 1
+Actual Loan Status: 1
+--------------------------------------------------
+Sample 9:
+Input Features:
+person_age                           24.00
+person_gender                         1.00
+person_education                      3.00
+person_income                     29794.00
+person_emp_exp                        5.00
+person_home_ownership                 3.00
+loan_amnt                         10000.00
+loan_intent                           5.00
+loan_int_rate                         8.70
+loan_percent_income                   0.34
+cb_person_cred_hist_length            2.00
+credit_score                        534.00
+previous_loan_defaults_on_file        0.00
+Name: 10372, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 1
+Actual Loan Status: 1
+--------------------------------------------------
+Sample 10:
+Input Features:
+person_age                           23.00
+person_gender                         1.00
+person_education                      0.00
+person_income                     53888.00
+person_emp_exp                        4.00
+person_home_ownership                 3.00
+loan_amnt                          8000.00
+loan_intent                           1.00
+loan_int_rate                        13.49
+loan_percent_income                   0.15
+cb_person_cred_hist_length            2.00
+credit_score                        637.00
+previous_loan_defaults_on_file        0.00
+Name: 8945, dtype: float64
+Predicted Loan Status (0 = Rejected, 1 = Approved): 1
+Actual Loan Status: 1
+--------------------------------------------------
+
+'''
